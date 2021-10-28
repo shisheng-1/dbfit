@@ -5,9 +5,13 @@ import dbfit.api.AbstractDbEnvironment;
 import dbfit.util.DbParameterAccessor;
 import dbfit.util.DbParameterAccessorsMapBuilder;
 import dbfit.util.Direction;
+import dbfit.util.Binary;
+import dbfit.util.ByteArrayNormaliser;
+
 import static dbfit.util.Direction.*;
 import static dbfit.util.LangUtils.enquoteAndJoin;
 import dbfit.util.TypeNormaliserFactory;
+
 import static dbfit.environment.SqlServerTypeNameNormaliser.normaliseTypeName;
 
 import java.math.BigDecimal;
@@ -29,6 +33,8 @@ public class SqlServerEnvironment extends AbstractDbEnvironment {
         defaultParamPatternString = "@([A-Za-z0-9_]+)";
         TypeNormaliserFactory.setNormaliser(java.sql.Time.class,
                 new MillisecondTimeNormaliser());
+        TypeNormaliserFactory.setNormaliser(byte[].class,
+                new ByteArrayNormaliser());
     }
 
     public boolean supportsOuputOnInsert() {
@@ -116,7 +122,8 @@ public class SqlServerEnvironment extends AbstractDbEnvironment {
     // private static List<String> doubleTypes=Arrays.asList(new
     // String[]{"DOUBLE"});
 
-    // private static string[] BinaryTypes=new string[] {"BINARY","VARBINARY", "TIMESTAMP"};
+    private static List<String> binaryTypes = Arrays.asList(new String[] {
+            "BINARY", "VARBINARY", "TIMESTAMP", "ROWVERSION", "IMAGE" });
     // private static string[] GuidTypes = new string[] { "UNIQUEIDENTIFIER" };
     // private static string[] VariantTypes = new string[] { "SQL_VARIANT" };
 
@@ -161,7 +168,8 @@ public class SqlServerEnvironment extends AbstractDbEnvironment {
             return java.sql.Types.FLOAT;
         if (doubleTypes.contains(dataType))
             return java.sql.Types.DOUBLE;
-
+        if (binaryTypes.contains(dataType))
+            return java.sql.Types.VARBINARY;
         if (longTypes.contains(dataType))
             return java.sql.Types.BIGINT;
         if (shortTypes.contains(dataType))
@@ -197,6 +205,8 @@ public class SqlServerEnvironment extends AbstractDbEnvironment {
             return Long.class;
         if (shortTypes.contains(dataType))
             return Short.class;
+        if (binaryTypes.contains(dataType))
+            return Binary.class;
 
         throw new UnsupportedOperationException("Type " + dataType
                 + " is not supported");
